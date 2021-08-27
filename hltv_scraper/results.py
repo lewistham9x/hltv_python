@@ -7,7 +7,7 @@ from dateutil import parser
 
 class HLTVResults():
 
-    columns = ["match_href", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars"]
+    columns = ["match_href", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars"]
 
     def __init__(self, base_url="https://www.hltv.org", endpoint="results"):
         self.base_url = base_url
