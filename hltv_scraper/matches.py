@@ -15,7 +15,33 @@ class HLTVMatches():
         self.endpoint = endpoint
 
     def get_matches_stats(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
-        """Hits the HLTV webpage and gets the details for the matches """
+        """Hits the HLTV webpage and gets the details for the matches.
+
+        Parameter
+        ---------
+        start_date: Optional[str]
+            Date of the first result with the format '%d-%m-%Y'
+
+        end_date: Optional[str]
+            Date of the last result with the format '%d-%m-%Y'
+
+        skip: Optional[int]
+            The number of results to be skipped from being returned. 
+            If not specified, do not skip any records.
+
+        limit: Optional[int] 
+            The maximum number of results to be returned. 
+            If not specified, only return 100 records. This is the default number
+            of matches displayed per page on HLTV.
+            If NONE, return all the records found.
+
+        batch_size: Optional[int]
+            Number of matches to be fetched in 1 iteration. This determines how frequent
+            data is written into the DataFrame. If {batch_size} is 1 then data is never lost
+            once it has been fetched, but slows down computation. If {batch_size == limit}
+            then 1 failed request may result in an empty DataFrame.
+
+        """
         df = pd.DataFrame(columns=HLTVMatches.columns)
 
         while (limit is None) or (len(df) < limit):  
@@ -34,7 +60,6 @@ class HLTVMatches():
                     for stat in self.get_match_stats_by_id(match_id)
             ]
            
-            print(matches_stats)
             df = df.append(matches_stats) 
             skip += len(match_ids) 
                 
