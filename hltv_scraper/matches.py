@@ -14,7 +14,7 @@ class HLTVMatches():
         self.base_url = base_url
         self.endpoint = endpoint
 
-    def get_matches(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
+    def get_matches_stats(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
         """Hits the HLTV webpage and gets the details for the matches """
         df = pd.DataFrame(columns=HLTVMatches.columns)
 
