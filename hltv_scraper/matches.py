@@ -8,75 +8,106 @@ from dateutil import parser
 
 class HLTVMatches():
 
-    columns = ["match_href", "date", "team_1", "team_2", "map", "team_1_ct", "team_2_t", "team_1_t", "team_2_ct", "starting_ct"]
+    columns = ["match_id", "date", "team_1", "team_2", "map", "team_1_ct", "team_2_t", "team_1_t", "team_2_ct", "starting_ct"]
 
-    def __init__(self, base_url="https://www.hltv.org", endpoint="matches", delay=1):
+    def __init__(self, base_url="https://www.hltv.org", endpoint="matches"):
         self.base_url = base_url
         self.endpoint = endpoint
 
-    def fetch_results(self, start_date=None, end_date=None, limit=None):
+    def get_matches(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
         """Hits the HLTV webpage and gets the details for the matches """
         df = pd.DataFrame(columns=HLTVMatches.columns)
 
-        offset = 0
-        new_row_count = 1
+        while (limit is None) or (len(df) < limit):  
+            batch_limit = batch_size if limit is None else min(batch_size, limit - len(df))
+            match_ids = self.get_matches_ids(start_date=start_date, end_date=end_date, 
+                                             skip=skip, limit=batch_limit)
 
-        if limit is not None:
-            result_rem_count = min(limit - offset, 100) 
-        
-        while new_row_count > 0 and (limit is None or result_rem_count > 0):
-            match_ids = self.__fetch_matches_href(start_date, end_date, offset, result_rem_count)
-            
-            for match_id in match_ids:
-                try:
-                    results = self.__fetch_match(match_id) 
-                    df = df.append(results)
-                except:
-                    return df
-                
+            # Breaks if no result found
+            if len(match_ids) == 0:
+                break
 
-            offset += len(match_ids) 
-        
-            # If limit is set, work out how many more records are required
-            if limit is not None:
-                result_rem_count = min(limit - offset, 100) 
+            # Fetches match statistics using its ID
+            matches_stats = [
+                stat 
+                for match_id in match_ids 
+                    for stat in self.get_match_stats_by_id(match_id)
+            ]
+           
+            print(matches_stats)
+            df = df.append(matches_stats) 
+            skip += len(match_ids) 
                 
         return df
 
     
-    def __fetch_matches_href(self, start_date=None, end_date=None, offset=0, limit=100):
+    def get_matches_ids(self, start_date=None, end_date=None, skip=0, limit=100):
         """Return the the links of {limit} matches.
         
-        First, hits HLTV page /results?offset={offset}&startDate={start_date}&endDate={end_date}.
+        First, hits HLTV page /results?offset={skip}&startDate={start_date}&endDate={end_date}.
         Parses the HTML and gets the required number of matches, and extracts their IDs and hrefs.
 
         The return values are endpoints for the corresponding matches.
+
+        Parameter
+        ---------
+        start_date: Optional[str]
+            Date of the first result with the format '%d-%m-%Y'
+
+        end_date: Optional[str]
+            Date of the last result with the format '%d-%m-%Y'
+
+        skip: Optional[int]
+            The number of results to be skipped from being returned. 
+            If not specified, do not skip any records.
+
+        limit: Optional[int] 
+            The maximum number of results to be returned. 
+            If not specified, only return 100 records. This is the default number
+            of matches displayed per page on HLTV.
+            If NONE, return all the records found.
             
         """
         results_url = urljoin(self.base_url, "results")
 
-        query = {
-            "startDate" : start_date,
-            "endDate" : end_date,
-            "offset" : offset
-        }
-        response = requests.get(
-            results_url, 
-            params={k : v for k,v in query.items() if v is not None}
-        )
-        tree = html.fromstring(response.text)
-        result_list = tree.find_class("allres")[0].find_class("result-con")
-        match_ids_list = [res.xpath(".//a")[0].get("href") for res in result_list]
+        # Accumulator for all match ids
+        all_matches_ids = []
 
-        return match_ids_list[:limit]
+        while (limit is None) or (len(all_matches_ids) < limit):
+            response = requests.get(results_url, params={
+                "startDate" : start_date,
+                "endDate" : end_date,
+                "offset" : skip
+            })
+            tree = html.fromstring(response.text)
 
-    def __fetch_match(self, match_id):
+            # Check for any results found
+            results = tree.find_class("allres")
+            if len(results) == 0:
+                break
+
+            # Extract the MATCH_ID from html page.
+            # This has the form:
+            #   /matches/{id}/{event-name}
+            matches = results[0].find_class("result-con")
+            matches_ids = [match.xpath(".//a")[0].get("href") for match in matches]
+
+            # Set the offset for the next request
+            skip += len(matches_ids)
+
+            # Adds to the accumulator
+            all_matches_ids += matches_ids
+
+        return all_matches_ids[:limit]
+
+    def get_match_stats_by_id(self, match_id):
         """Return the JSON details for the match by its match_id.
 
         Parameter
         ---------
-        match_id: HLTV endpoint that identifies the match. This usually has the format
-                  /matches/{id}/{event-name}
+        match_id: str
+            HLTV endpoint that identifies the match. This usually has the format
+            /matches/{id}/{event-name}
 
         Return
         ------
@@ -104,7 +135,7 @@ class HLTVMatches():
                 continue
            
             maps.append({ 
-                "match_href" : match_id,
+                "match_id" : match_id,
                 "date" : date, 
                 "team_1" : team_one,
                 "team_2" : team_two,
