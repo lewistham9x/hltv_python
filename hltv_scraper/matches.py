@@ -6,6 +6,8 @@ from lxml import html
 from urllib.parse import urljoin
 from dateutil import parser 
 
+from hltv_scraper.client import HLTVClient
+
 class HLTVMatches():
 
     columns = ["match_id", "date", "team_1", "team_2", "map", "team_1_ct", "team_2_t", "team_1_t", "team_2_ct", "starting_ct"]
@@ -13,6 +15,7 @@ class HLTVMatches():
     def __init__(self, base_url="https://www.hltv.org", endpoint="matches"):
         self.base_url = base_url
         self.endpoint = endpoint
+        self.client = HLTVClient(base_url=base_url, max_retry=3)
 
     def get_matches_stats(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
         """Hits the HLTV webpage and gets the details for the matches.
@@ -99,7 +102,7 @@ class HLTVMatches():
         all_matches_ids = []
 
         while (limit is None) or (len(all_matches_ids) < limit):
-            response = requests.get(results_url, params={
+            response = self.client.get(results_url, params={
                 "startDate" : start_date,
                 "endDate" : end_date,
                 "offset" : skip
@@ -140,7 +143,7 @@ class HLTVMatches():
             
         """
         match_url = urljoin(self.base_url, match_id)
-        response = requests.get(match_url)
+        response = self.client.get(match_url)
         tree = html.fromstring(response.text)
 
         # Date

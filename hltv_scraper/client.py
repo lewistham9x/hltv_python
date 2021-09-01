@@ -23,7 +23,7 @@ class HLTVClient():
         self.last_request_timestamp = None
         self.max_retry = 1
 
-    def __get(self, url, **kwargs):
+    def get(self, url, **kwargs):
         # TODO: Come up with algorithm to bypass rate limit
         attempt = 0
         response = None
@@ -55,5 +55,5 @@ class HLTVClient():
   
     def search_team(self, search_term):
         url = urljoin(self.base_url, "searchTeam")
-        return self.__get(url, params={"term" : search_term})
+        return self.get(url, params={"term" : search_term})
 
