@@ -5,6 +5,8 @@ from lxml import html
 from urllib.parse import urljoin
 from dateutil import parser 
 
+from hltv_scraper.client import HLTVClient
+
 class HLTVResults():
 
     columns = ["match_href", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars"]
@@ -13,36 +15,20 @@ class HLTVResults():
         self.base_url = base_url
         self.endpoint = endpoint
         self.base_path = urljoin(base_url, endpoint)
+        self.client = HLTVClient(max_retry=3)
 
-    def fetch_results(self, start_date=None, end_date=None, limit=None):
-        df = pd.DataFrame(columns=HLTVResults.columns)
-        
-        offset = 0
-        new_row_count = 1
-
-        if limit is not None:
-            result_rem_count = min(limit - offset, 100) 
-        
-        while new_row_count > 0 and (limit is None or result_rem_count > 0):
-            new_row_count, df = self.__fetch_results(df, start_date, end_date, offset, result_rem_count)
-            offset += new_row_count
-        
-            # If limit is set, work out how many more records are required
-            if limit is not None:
-                result_rem_count = min(limit - offset, 100) 
-                
-        return df
+    def get_results(self, match_type=None, maps=None, event=None, player=None, team=None, start_date=None, end_date=None, limit=None):
+        pass
     
 
-    def __fetch_results(self, df, start_date=None, end_date=None, offset=0, limit=100):
-        query = {
-            "startDate" : start_date,
-            "endDate" : end_date,
-            "offset" : offset
-        }
-        response = requests.get(
-            self.base_path, 
-            params={k : v for k,v in query.items() if v is not None}
+    def __fetch_results(self, df, start_date=None, end_date=None, skip=0, limit=100):
+        response = self.client.get(
+            self.base_path,
+            params={
+                "startDate" : start_date,
+                "endDate" : end_date,
+                "offset" : skip
+            }
         )
         tree = html.fromstring(response.text)
 
