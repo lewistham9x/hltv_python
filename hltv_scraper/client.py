@@ -57,3 +57,10 @@ class HLTVClient():
         url = urljoin(self.base_url, "searchTeam")
         return self.get(url, params={"term" : search_term})
 
+    def search_player(self, search_term):
+        url = urljoin(self.base_url, "searchPlayer")
+        return self.get(url, params={"term" : search_term})
+
+    def search_event(self, search_term):
+        url = urljoin(self.base_url, "searchEvent")
+        return self.get(url, params={"term" : search_term})
