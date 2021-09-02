@@ -9,7 +9,7 @@ from hltv_scraper.client import HLTVClient
 
 class HLTVResults():
 
-    columns = ["match_id", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars"]
+    columns = ["match_id", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars", "match_link"]
 
     maps = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke", 
                      "train", "cobblestone", "overpass", "tuscan", "vertigo", "ancient"])
@@ -26,9 +26,9 @@ class HLTVResults():
                     limit=None, maps=None, events=None, players=None, teams=None, stars=None,
                     require_all_teams=None, require_all_players=None):
 
-        map_filter = [f"de_{mapname.lower()}" 
-                      for mapname in (maps or []) 
-                      if mapname.lower() in HLTVResults.maps]
+        maps_formatted = [f"de_{mapname.lower()}" 
+                          for mapname in (maps or []) 
+                          if mapname.lower() in HLTVResults.maps]
 
         # HLTV considers this as a flag so the 'truth-value' does not matter
         # Hence making it 'None' removes it from the query parameter
@@ -43,6 +43,7 @@ class HLTVResults():
             "events" : events,
             "player" : players,
             "team" : teams,
+            "map" : maps_formatted,
             "stars" : stars,
             "requireAllTeams" : require_all_teams,
             "requireAllPlayers" : require_all_players
@@ -109,17 +110,19 @@ class HLTVResults():
 
         # Match ID endpoint
         match_href = html.xpath(".//a")[0].get("href")
+        match_id = match_href.split(sep="/")[2]
 
         # Number of stars
         stars = len(html.find_class("fa-star"))
 
         return {
-            "match_id" : match_href,
+            "match_id" : match_id,
             "team_1" : team_one,
             "team_2" : team_two,
             "score_1" : score_one,
             "score_2" : score_two,
             "map" : map_text,
             "event" : event,
-            "stars" : stars
+            "stars" : stars,
+            "match_uri" : match_href
         }
