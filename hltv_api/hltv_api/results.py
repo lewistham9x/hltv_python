@@ -5,21 +5,19 @@ from lxml import html
 from urllib.parse import urljoin
 from dateutil import parser 
 
-from hltv_scraper.client import HLTVClient
+from hltv_api.client import HLTVClient
+from hltv_api.common import HLTVConfig, MAPS
 
 class HLTVResults():
 
     columns = ["match_id", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars", "match_link"]
 
-    maps = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke", 
-                     "train", "cobblestone", "overpass", "tuscan", "vertigo", "ancient"])
 
     match_types = frozenset(["lan", "online"])
 
-    def __init__(self, base_url="https://www.hltv.org", endpoint="results"):
+    def __init__(self, base_url=HLTVConfig["base_url"], endpoint=HLTVConfig["results_uri"]):
         self.base_url = base_url
         self.endpoint = endpoint
-        self.base_path = urljoin(base_url, endpoint)
         self.client = HLTVClient(max_retry=3)
 
     def get_results(self, match_type=None, start_date=None, end_date=None, skip=0, 
@@ -28,7 +26,7 @@ class HLTVResults():
 
         maps_formatted = [f"de_{mapname.lower()}" 
                           for mapname in (maps or []) 
-                          if mapname.lower() in HLTVResults.maps]
+                          if mapname.lower() in MAPS]
 
         # HLTV considers this as a flag so the 'truth-value' does not matter
         # Hence making it 'None' removes it from the query parameter
@@ -48,7 +46,7 @@ class HLTVResults():
             "requireAllTeams" : require_all_teams,
             "requireAllPlayers" : require_all_players
         }
-        url = urljoin(self.base_url, "results")
+        url = urljoin(self.base_url, self.endpoint)
 
         df = pd.DataFrame(columns=HLTVResults.columns)
 

@@ -1,3 +1,4 @@
+import os
 import time
 import requests
 import pandas as pd
@@ -6,17 +7,23 @@ from lxml import html
 from urllib.parse import urljoin
 from dateutil import parser 
 
-from hltv_scraper.client import HLTVClient
+from hltv_api.client import HLTVClient
+from hltv_api.common import HLTVConfig
 
 class HLTVMatches():
 
     columns = ["match_id", "date", "team_1", "team_2", "team_1_id", "team_2_id", 
-               "team_1_uri", "team_2_uri", "map", "team_1_ct", "team_2_t", 
-               "team_1_t", "team_2_ct", "starting_ct", "match_uri"]
+               "map", "team_1_ct", "team_2_t", "team_1_t", "team_2_ct", "starting_ct"]
 
-    def __init__(self, base_url="https://www.hltv.org", endpoint="matches"):
+    def __init__(
+        self, 
+        base_url=HLTVConfig["base_url"], 
+        matches_uri=HLTVConfig["matches_uri"], 
+        results_uri=HLTVConfig["results_uri"]
+    ):
         self.base_url = base_url
-        self.endpoint = endpoint
+        self.matches_uri = matches_uri
+        self.results_uri = results_uri
         self.client = HLTVClient(base_url=base_url, max_retry=3)
 
     def get_matches_stats(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
@@ -98,7 +105,7 @@ class HLTVMatches():
             If NONE, return all the records found.
             
         """
-        results_url = urljoin(self.base_url, "results")
+        results_url = urljoin(self.base_url, self.results_uri)
 
         # Accumulator for all match ids
         all_matches_ids = []
@@ -130,21 +137,31 @@ class HLTVMatches():
 
         return all_matches_ids[:limit]
 
-    def get_match_stats_by_id(self, match_uri):
+    def get_match_stats_by_id(self, match_uri=None, match_id=None):
         """Return the JSON details for the match by its match_id.
 
         Parameter
         ---------
-        match_uri: str
+        match_uri: Optional[str]
             HLTV endpoint that identifies the match. This usually has the format
             /matches/{id}/{event-name}
+        match_id: Optional[Union[str, int]]
+            Match identifier.
 
         Return
         ------
         List of dictionary objects containing the fields specified in {columns}
             
         """
-        match_id = match_uri.split(sep="/")[2]
+        if match_uri is not None:
+            match_id = match_uri.split(sep="/")[2]
+        elif match_id is not None:
+            # URL requires the event name but does not matter if it is 
+            # not the event corresponding to the ID
+            match_uri = os.path.join(match_id, "foo") 
+        else:
+            raise Exception("Expecting match_uri or match_id to be not None")
+
         match_url = urljoin(self.base_url, match_uri)
         response = self.client.get(match_url)
         tree = html.fromstring(response.text)
@@ -156,12 +173,10 @@ class HLTVMatches():
 
         # Team 1  
         team_one = tree.find_class("teamName")[0].text_content()
-        team_one_uri = tree.find_class("team1-gradient")[0].xpath(".//a")[0].get("href")
         team_one_id = team_one_uri.split(sep="/")[2]
 
         # Team 2
         team_two = tree.find_class("teamName")[1].text_content() 
-        team_two_uri = tree.find_class("team2-gradient")[0].xpath(".//a")[0].get("href")
         team_two_id = team_two_uri.split(sep="/")[2]
        
         # Maps played
@@ -177,11 +192,8 @@ class HLTVMatches():
                 "date" : date, 
                 "team_1" : team_one,
                 "team_1_id" : team_one_id,
-                "team_1_uri" : team_one_uri,
                 "team_2" : team_two,
                 "team_2_id" : team_two_id,
-                "team_2_uri" : team_two_uri,
-                "match_uri" : match_uri,
                 **self.__parse_match_tree(map_pick)
             })
         return maps
