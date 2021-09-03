@@ -173,10 +173,12 @@ class HLTVMatches():
 
         # Team 1  
         team_one = tree.find_class("teamName")[0].text_content()
+        team_one_uri = tree.find_class("team1-gradient")[0].xpath(".//a")[0].get("href")
         team_one_id = team_one_uri.split(sep="/")[2]
 
         # Team 2
         team_two = tree.find_class("teamName")[1].text_content() 
+        team_two_uri = tree.find_class("team2-gradient")[0].xpath(".//a")[0].get("href")
         team_two_id = team_two_uri.split(sep="/")[2]
        
         # Maps played
