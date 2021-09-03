@@ -4,13 +4,50 @@ from typing import Union, Optional, List
 
 from hltv_api.exceptions import HLTVInvalidInputException
 
-class HLTVFilter():
+class HLTVQuery():
+    """Hits the HLTV webpage and gets the details for the matches.
+
+    Attribute 
+    ---------
+    match_type: Optional[str]
+        LAN or Online games.
+
+    start_date: Optional[Union[str, datetime]]
+        Date of the first result with the format '%d-%m-%Y'
+
+    end_date: Optional[Union[str, datetime]]
+        Date of the last result with the format '%d-%m-%Y'
+
+    maps: Optional[List[str]]
+        Only matches that include these maps will be returned.
+        Available maps include all maps that have been in the official map pool.
+
+    events: Optional[List[Union[str, int]]]
+        List of event ids to choose from.
+
+    teams: Optional[List[Union[str, int]]]
+        List of team ids to choose from.
+        
+    players: Optional[List[Union[str, int]]]
+        List of players ids to choose from.
+    
+    stars: Optional[int]
+        Only choose games with specified HLTV star rating. If not specified,
+        return all matches found.
+
+    require_all_teams: Optional[bool]
+        Only return matches where both teams are in `teams`.
+
+    require_all_players: Optional[bool]
+        Only return matches where all `players` are in the line-up.
+
+    """
     MATCH_TYPES = frozenset(["lan, online"])
     STARS = range(1,6)
     MAPS = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke", 
                       "train", "cobblestone", "overpass", "tuscan", 
                       "vertigo", "ancient"])
-    DATE_FORMAT = "%d-%m-%Y"
+    DATE_FORMAT = "%Y-%m-%d"
 
     def __init__(
         self, 
@@ -18,18 +55,18 @@ class HLTVFilter():
         start_date: Optional[Union[str, datetime]] = None, 
         end_date: Optional[Union[str, datetime]] = None, 
         maps: Optional[List[str]] = [], 
-        events: Optional[List[int]] = [], 
-        players: Optional[List[int]] = [], 
-        teams: Optional[List[int]] = [], 
+        events: Optional[List[Union[int, str]]] = [], 
+        players: Optional[List[Union[int, str]]] = [], 
+        teams: Optional[List[Union[int, str]]]= [], 
         stars: Optional[int] = None,
         require_all_teams: Optional[bool] = None,
         require_all_players: Optional[bool] = None
     ):
         # Validate match_type
-        if match_type is not None and match_type.lower() not in HLTVFilter.MATCH_TYPES:
+        if match_type is not None and match_type.lower() not in HLTVQuery.MATCH_TYPES:
             raise HLTVInvalidInputException(
                 message=f"Invalid match_type: {match_type}",
-                expected=f"One of {HLTVFilter.MATCH_TYPES}",
+                expected=f"One of {HLTVQuery.MATCH_TYPES}",
             )
         self.match_type = match_type
 
@@ -37,24 +74,24 @@ class HLTVFilter():
         if start_date is None:
             self.start_date = None
         elif type(start_date) == str:
-            self.start_date = parser.parse(start_date).strftime(HLTVFilter.DATE_FORMAT)
+            self.start_date = parser.parse(start_date).strftime(HLTVQuery.DATE_FORMAT)
         else:
-            self.start_date = start_date.strftime(HLTVFilter.DATE_FORMAT)
+            self.start_date = start_date.strftime(HLTVQuery.DATE_FORMAT)
         
         if end_date is None:
             self.end_date = None
         elif type(end_date) == str:
-            self.end_date = parser.parse(end_date).strftime(HLTVFilter.DATE_FORMAT)
+            self.end_date = parser.parse(end_date).strftime(HLTVQuery.DATE_FORMAT)
         else:
-            self.end_date = end_date.strftime(HLTVFilter.DATE_FORMAT)
+            self.end_date = end_date.strftime(HLTVQuery.DATE_FORMAT)
 
         # Validate maps
-        if all(elem in HLTVFilter.MAPS for elem in maps):
+        if all(elem in HLTVQuery.MAPS for elem in maps):
             self.maps = [f"de_{mapname}" for mapname in maps]
         else:
             raise HLTVInvalidInputException(
                 message=f"1 or more invalid map name in {maps}",
-                expected="One of {HLTVFilter.MAPS}"
+                expected="One of {HLTVQuery.MAPS}"
             )
 
         # Event IDs
