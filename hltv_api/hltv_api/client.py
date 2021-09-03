@@ -4,17 +4,7 @@ import requests
 from datetime import datetime
 from urllib.parse import urljoin
 
-class HLTVClientException(Exception):
-    """Base class for exception caused in this module."""
-    pass
-
-class HLTVRequestException(HLTVClientException):
-    """Exception raised for when a request fails. """
-
-    def __init__(self, message, status_code, response):
-        self.message = message
-        self.status_code = status_code
-        self.response = response
+from hltv_api.exceptions import HLTVRequestException
 
 class HLTVClient():
 
