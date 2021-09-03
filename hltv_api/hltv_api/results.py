@@ -5,53 +5,50 @@ from lxml import html
 from urllib.parse import urljoin
 from dateutil import parser 
 
+from hltv_api.query import HLTVQuery
 from hltv_api.client import HLTVClient
-from hltv_api.common import HLTVConfig, MAPS
+from hltv_api.common import HLTVConfig
 
 class HLTVResults():
 
-    columns = ["match_id", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars", "match_link"]
-
-
-    match_types = frozenset(["lan", "online"])
+    columns = ["match_id", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars"]
 
     def __init__(self, base_url=HLTVConfig["base_url"], endpoint=HLTVConfig["results_uri"]):
         self.base_url = base_url
         self.endpoint = endpoint
         self.client = HLTVClient(max_retry=3)
 
-    def get_results(self, match_type=None, start_date=None, end_date=None, skip=0, 
-                    limit=None, maps=None, events=None, players=None, teams=None, stars=None,
-                    require_all_teams=None, require_all_players=None):
+    def get_results(self, skip=0, limit=None, query=None, **kwargs): 
+        """Fetches data for the results filtered by `query`.
+        
+        Parameter
+        ---------
+        skip: Optional[int]
+            The number of results to be skipped from being returned. 
+            If not specified, do not skip any records.
 
-        maps_formatted = [f"de_{mapname.lower()}" 
-                          for mapname in (maps or []) 
-                          if mapname.lower() in MAPS]
+        limit: Optional[int] 
+            The maximum number of results to be returned. 
+            If not specified, only return 100 records. This is the default number
+            of matches displayed per page on HLTV.
+            If NONE, return all the records found.
 
-        # HLTV considers this as a flag so the 'truth-value' does not matter
-        # Hence making it 'None' removes it from the query parameter
-        require_all_teams = require_all_teams or None
-        require_all_players = require_all_players or None
+        query: Optional[HLTVQuery]
+            Query and filter for data required.
+        
 
-        query = {
-            "startDate" : start_date,
-            "endDate" : end_date,
-            "offset" : skip,
-            "matchType" : match_type,
-            "events" : events,
-            "player" : players,
-            "team" : teams,
-            "map" : maps_formatted,
-            "stars" : stars,
-            "requireAllTeams" : require_all_teams,
-            "requireAllPlayers" : require_all_players
-        }
+        Return
+        ------
+        pandas.DataFrame
+        """
+
+        query = query or HLTVQuery(**kwargs)                
         url = urljoin(self.base_url, self.endpoint)
 
         df = pd.DataFrame(columns=HLTVResults.columns)
 
         while (limit is None) or (len(df) < limit):  
-            response = self.client.get(url, params=query)
+            response = self.client.get(url, params=query.to_params())
             tree = html.fromstring(response.text)
 
             results = self.__parse_result_page(tree)
@@ -81,7 +78,7 @@ class HLTVResults():
             # store it in the pd.DataFrame
             sublist_matches = [
                 {
-                    "date" : datetime.strftime("%d-%m-%Y"), 
+                    "date" : datetime.strftime("%Y-%m-%d"), 
                     **self.__parse_match_tree(match)
                 } for match in matches
             ] 
@@ -117,10 +114,9 @@ class HLTVResults():
             "match_id" : match_id,
             "team_1" : team_one,
             "team_2" : team_two,
-            "score_1" : score_one,
-            "score_2" : score_two,
+            "score_1" : int(score_one),
+            "score_2" : int(score_two),
             "map" : map_text,
             "event" : event,
             "stars" : stars,
-            "match_uri" : match_href
         }

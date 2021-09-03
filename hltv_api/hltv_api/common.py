@@ -8,11 +8,6 @@ HLTVConfig = {
     "search_players_uri" : "searchPlayer"
 }
 
-MAPS = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke", 
-                  "train", "cobblestone", "overpass", "tuscan", 
-                  "vertigo", "ancient"])
-
-
 def basic_hltv_config(key, value):
     global HLTVConfig
 

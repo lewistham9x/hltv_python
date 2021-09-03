@@ -7,6 +7,7 @@ from lxml import html
 from urllib.parse import urljoin
 from dateutil import parser 
 
+from hltv_api.query import HLTVQuery
 from hltv_api.client import HLTVClient
 from hltv_api.common import HLTVConfig
 
@@ -26,17 +27,11 @@ class HLTVMatches():
         self.results_uri = results_uri
         self.client = HLTVClient(base_url=base_url, max_retry=3)
 
-    def get_matches_stats(self, start_date=None, end_date=None, skip=0, limit=None, batch_size=100):
+    def get_matches_stats(self, skip=0, limit=None, batch_size=100, query=None, **kwargs):
         """Hits the HLTV webpage and gets the details for the matches.
 
         Parameter
         ---------
-        start_date: Optional[str]
-            Date of the first result with the format '%d-%m-%Y'
-
-        end_date: Optional[str]
-            Date of the last result with the format '%d-%m-%Y'
-
         skip: Optional[int]
             The number of results to be skipped from being returned. 
             If not specified, do not skip any records.
@@ -53,32 +48,43 @@ class HLTVMatches():
             once it has been fetched, but slows down computation. If {batch_size == limit}
             then 1 failed request may result in an empty DataFrame.
 
+        query: Optional[HLTVQuery]
+            Query and filter for data required.
+
+        Return
+        ------
+        pandas.DataFrame containing all matches found that matched the criterias.
+
         """
+        query = query or HLTVQuery(**kwargs)
         df = pd.DataFrame(columns=HLTVMatches.columns)
 
         while (limit is None) or (len(df) < limit):  
             batch_limit = batch_size if limit is None else min(batch_size, limit - len(df))
-            match_ids = self.get_matches_ids(start_date=start_date, end_date=end_date, 
-                                             skip=skip, limit=batch_limit)
+            match_uris = self.get_matches_uris(
+                skip=skip, 
+                limit=batch_limit,
+                query=query
+            )
 
             # Breaks if no result found
-            if len(match_ids) == 0:
+            if len(match_uris) == 0:
                 break
 
             # Fetches match statistics using its ID
             matches_stats = [
                 stat 
-                for match_id in match_ids 
-                    for stat in self.get_match_stats_by_id(match_id)
+                for match_uri in match_uris 
+                    for stat in self.get_match_stats_by_id(match_uri)
             ]
            
             df = df.append(matches_stats) 
-            skip += len(match_ids) 
+            skip += len(match_uris) 
                 
         return df
 
     
-    def get_matches_ids(self, start_date=None, end_date=None, skip=0, limit=100):
+    def get_matches_uris(self, skip=0, limit=100, query=None, **kwargs):
         """Return the the links of {limit} matches.
         
         First, hits HLTV page /results?offset={skip}&startDate={start_date}&endDate={end_date}.
@@ -88,12 +94,6 @@ class HLTVMatches():
 
         Parameter
         ---------
-        start_date: Optional[str]
-            Date of the first result with the format '%d-%m-%Y'
-
-        end_date: Optional[str]
-            Date of the last result with the format '%d-%m-%Y'
-
         skip: Optional[int]
             The number of results to be skipped from being returned. 
             If not specified, do not skip any records.
@@ -103,6 +103,9 @@ class HLTVMatches():
             If not specified, only return 100 records. This is the default number
             of matches displayed per page on HLTV.
             If NONE, return all the records found.
+
+        query: Optional[HLTVQuery]
+            Queries and filters for the data.
             
         """
         results_url = urljoin(self.base_url, self.results_uri)
@@ -110,12 +113,10 @@ class HLTVMatches():
         # Accumulator for all match ids
         all_matches_ids = []
 
+        query = query or HLTVQuery(**kwargs)
+
         while (limit is None) or (len(all_matches_ids) < limit):
-            response = self.client.get(results_url, params={
-                "startDate" : start_date,
-                "endDate" : end_date,
-                "offset" : skip
-            })
+            response = self.client.get(results_url, params=query.to_params())
             tree = html.fromstring(response.text)
 
             # Check for any results found
