@@ -10,10 +10,10 @@ def test_query_correct_default_values():
     assert hltv_query.to_params() == {
             "startDate" : None,
             "endDate" : None,
-            "maps" : [],
-            "events" : [],
-            "players" : [],
-            "teams" : [],
+            "map" : [],
+            "event" : [],
+            "player" : [],
+            "team" : [],
             "stars" : None,
             "requireAllTeams" : None,
             "requireAllPlayers" : None
@@ -44,7 +44,7 @@ def test_query_invalid_maps_throw_error():
 def test_query_valid_maps_accepted():
     maps = ["cache", "dust2"]
     hltv_query = HLTVQuery(maps=maps)
-    assert hltv_query.to_params()["maps"] == ["de_cache", "de_dust2"]
+    assert hltv_query.to_params()["map"] == ["de_cache", "de_dust2"]
 
 def test_query_invalid_stars_throw_error():
     with pytest.raises(HLTVInvalidInputException) as e:
