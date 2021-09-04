@@ -121,10 +121,10 @@ class HLTVQuery():
         return {
             "startDate" : self.start_date,
             "endDate" : self.end_date,
-            "maps" : self.maps,
-            "events" : self.events,
-            "players" : self.players,
-            "teams" : self.teams,
+            "map" : self.maps,
+            "event" : self.events,
+            "player" : self.players,
+            "team" : self.teams,
             "stars" : self.stars,
             "requireAllTeams" : self.require_all_teams,
             "requireAllPlayers" : self.require_all_players
