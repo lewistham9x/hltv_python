@@ -5,7 +5,9 @@ HLTVConfig = {
     "teams_uri" : "teams",
     "players_uri" : "players",
     "search_teams_uri" : "searchTeam",
-    "search_players_uri" : "searchPlayer"
+    "search_players_uri" : "searchPlayer",
+
+    "date_format" : "%Y-%m-%d"
 }
 
 def basic_hltv_config(key, value):

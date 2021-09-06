@@ -2,6 +2,7 @@ from dateutil import parser
 from datetime import datetime
 from typing import Union, Optional, List
 
+from hltv_api.common import HLTVConfig
 from hltv_api.exceptions import HLTVInvalidInputException
 
 class HLTVQuery():
@@ -47,7 +48,6 @@ class HLTVQuery():
     MAPS = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke", 
                       "train", "cobblestone", "overpass", "tuscan", 
                       "vertigo", "ancient"])
-    DATE_FORMAT = "%Y-%m-%d"
 
     def __init__(
         self, 
@@ -74,16 +74,16 @@ class HLTVQuery():
         if start_date is None:
             self.start_date = None
         elif type(start_date) == str:
-            self.start_date = parser.parse(start_date).strftime(HLTVQuery.DATE_FORMAT)
+            self.start_date = parser.parse(start_date).strftime(HLTVConfig["date_format"])
         else:
-            self.start_date = start_date.strftime(HLTVQuery.DATE_FORMAT)
+            self.start_date = start_date.strftime(HLTVConfig["date_format"])
         
         if end_date is None:
             self.end_date = None
         elif type(end_date) == str:
-            self.end_date = parser.parse(end_date).strftime(HLTVQuery.DATE_FORMAT)
+            self.end_date = parser.parse(end_date).strftime(HLTVConfig["date_format"])
         else:
-            self.end_date = end_date.strftime(HLTVQuery.DATE_FORMAT)
+            self.end_date = end_date.strftime(HLTVConfig["date_format"])
 
         # Validate maps
         if all(elem in HLTVQuery.MAPS for elem in maps):
