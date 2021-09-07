@@ -1,5 +1,16 @@
 from setuptools import setup, find_packages
 
+# Dependencies
+install_requirements = [
+    "lxml==4.6.3",
+    "requests==2.26.0",
+    "pandas==1.3.2" 
+]
+
+test_requirements = [
+    "pytest>=6"
+]
+
 setup(
     name="hltv-api",
     version="0.0.1",
@@ -10,11 +21,17 @@ setup(
     author="Hoang Vu",
     author_email="vc.hoang01@gmail.com",
     license='MIT',
-    install_requires=[
-        "lxml==4.6.3",
-        "requests==2.26.0",
-        "pandas==1.3.2" 
-    ],
     package_dir= {"" : "src"},
     packages=find_packages(where="src")
+    python_requires=">=3.7",
+    classifiers=[
+        "Natural Language :: English",
+        "Programming Language :: Python",
+        "Programming Language :: Python 3.7",
+        "Programming Language :: Python 3.8",
+        "Programming Language :: Python 3.9",
+    ],
+    
+    install_require=install_requirements,
+    test_require=test_requirements,
 )
