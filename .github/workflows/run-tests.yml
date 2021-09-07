@@ -19,7 +19,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pip install -e hltv_api
-          pip install -r hltv_api/requirements-dev.txt
+          pip install -e . 
+          pip install -r requirements-dev.txt
       - name: Run tests
-        run: pytest hltv_api/test --junitxml=test/report.xml 
+        run: pytest test --junitxml=report.xml 
