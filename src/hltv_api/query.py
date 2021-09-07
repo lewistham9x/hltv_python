@@ -1,9 +1,12 @@
-from dateutil import parser
 from datetime import datetime
 from typing import Union, Optional, List
 
+from dateutil import parser
+
+from hltv_api.client import HLTVClient
 from hltv_api.common import HLTVConfig
 from hltv_api.exceptions import HLTVInvalidInputException
+
 
 class HLTVQuery():
     """Hits the HLTV webpage and gets the details for the matches.
@@ -44,23 +47,26 @@ class HLTVQuery():
 
     """
     MATCH_TYPES = frozenset(["lan, online"])
-    STARS = range(1,6)
-    MAPS = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke", 
-                      "train", "cobblestone", "overpass", "tuscan", 
+    STARS = range(1, 6)
+    MAPS = frozenset(["cache", "season", "dust2", "mirage", "inferno", "nuke",
+                      "train", "cobblestone", "overpass", "tuscan",
                       "vertigo", "ancient"])
 
     def __init__(
-        self, 
-        match_type: Optional[str] = None, 
-        start_date: Optional[Union[str, datetime]] = None, 
-        end_date: Optional[Union[str, datetime]] = None, 
-        maps: Optional[List[str]] = [], 
-        events: Optional[List[Union[int, str]]] = [], 
-        players: Optional[List[Union[int, str]]] = [], 
-        teams: Optional[List[Union[int, str]]]= [], 
-        stars: Optional[int] = None,
-        require_all_teams: Optional[bool] = None,
-        require_all_players: Optional[bool] = None
+            self,
+            match_type: Optional[str] = None,
+            start_date: Optional[Union[str, datetime]] = None,
+            end_date: Optional[Union[str, datetime]] = None,
+            maps: Optional[List[str]] = [],
+            event_ids: Optional[List[Union[int, str]]] = [],
+            event_names: Optional[List[str]] = [],
+            player_ids: Optional[List[Union[int, str]]] = [],
+            player_names: Optional[List[str]] = [],
+            team_ids: Optional[List[Union[int, str]]] = [],
+            team_names: Optional[List[str]] = [],
+            stars: Optional[int] = None,
+            require_all_teams: Optional[bool] = None,
+            require_all_players: Optional[bool] = None
     ):
         # Validate match_type
         if match_type is not None and match_type.lower() not in HLTVQuery.MATCH_TYPES:
@@ -77,7 +83,7 @@ class HLTVQuery():
             self.start_date = parser.parse(start_date).strftime(HLTVConfig["date_format"])
         else:
             self.start_date = start_date.strftime(HLTVConfig["date_format"])
-        
+
         if end_date is None:
             self.end_date = None
         elif type(end_date) == str:
@@ -95,37 +101,61 @@ class HLTVQuery():
             )
 
         # Event IDs
-        self.events=events
+        self.event_ids = [int(e) for e in event_ids]
+        self.event_names = event_names
 
         # Player IDs
-        self.players=players
+        self.player_ids = [int(p) for p in player_ids]
+        self.player_names = player_names
 
         # Team IDs
-        self.teams=teams
+        self.team_ids = [int(t) for t in team_ids]
+        self.team_names = team_names
 
         # Validate number of stars for the game
-        if stars is None or stars in range(1,6):
+        if stars is None or stars in range(1, 6):
             self.stars = stars
         else:
             raise HLTVInvalidInputException(
                 message=f"Stars can only be between 1 and 5",
                 expected="Integer between 1 and 5 inclusive"
             )
-       
+
         # HLTV considers this as a flag so the 'truth-value' does not matter
         # Hence making it 'None' removes it from the query parameter
         self.require_all_teams = require_all_teams or None
         self.require_all_players = require_all_players or None
-    
+
+    def _aggregate_events(self):
+        client = HLTVClient()
+        event_ids_from_names = [matching_event["id"]
+                                for event_name in self.event_names
+                                for matching_event in client.search_event(event_name)]
+        return list(dict.fromkeys([*self.event_ids, *event_ids_from_names]))
+
+    def _aggregate_players(self):
+        client = HLTVClient()
+        player_ids_from_names = [matching_player["id"]
+                                 for player_name in self.player_names
+                                 for matching_player in client.search_player(player_name)]
+        return list(dict.fromkeys([*self.player_ids, *player_ids_from_names]))
+
+    def _aggregate_teams(self):
+        client = HLTVClient()
+        team_ids_from_names = [matching_team["id"]
+                               for team_name in self.team_names
+                               for matching_team in client.search_team(team_name)]
+        return list(dict.fromkeys([*self.team_ids, *team_ids_from_names]))
+
     def to_params(self):
         return {
-            "startDate" : self.start_date,
-            "endDate" : self.end_date,
-            "map" : self.maps,
-            "event" : self.events,
-            "player" : self.players,
-            "team" : self.teams,
-            "stars" : self.stars,
-            "requireAllTeams" : self.require_all_teams,
-            "requireAllPlayers" : self.require_all_players
+            "startDate": self.start_date,
+            "endDate": self.end_date,
+            "map": self.maps,
+            "event": self._aggregate_events(),
+            "player": self._aggregate_players(),
+            "team": self._aggregate_teams(),
+            "stars": self.stars,
+            "requireAllTeams": self.require_all_teams,
+            "requireAllPlayers": self.require_all_players
         }

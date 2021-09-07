@@ -51,8 +51,32 @@ def test_query_invalid_stars_throw_error():
         hltv_query = HLTVQuery(stars=0)
 
 def test_query_valid_stars_accepted():
-    querys = [HLTVQuery(stars=num) for num in range(1,6)]
+    queries = [HLTVQuery(stars=num) for num in range(1,6)]
     
-    for i, hltv_query in enumerate(querys):
+    for i, hltv_query in enumerate(queries):
         assert hltv_query.to_params()["stars"] == i + 1 
+    
+def test_query_team_names():
+    # There are 4 teams which should match the name 'navi'
+    query = HLTVQuery(team_ids=[6667], team_names=["navi"])
+
+    team_ids = query.to_params()["team"]
+
+    assert sorted(team_ids) == [178, 6667, 10371, 10730, 10918]
+
+def test_query_player_names():
+    # There are 4 teams which should match the name 'navi'
+    query = HLTVQuery(player_ids=[3741], player_names=["s1mple", "niko"])
+
+    player_ids = query.to_params()["player"]
+
+    assert sorted(player_ids) == [154, 1142, 3741, 7418, 7998, 10112, 10264, 10504, 13064, 17726]
+
+def test_query_event_names():
+    # There are 4 teams which should match the name 'navi'
+    query = HLTVQuery(event_ids=[2062], event_names=["ESL"])
+
+    event_ids = query.to_params()["event"]
+
+    assert sorted(event_ids) == [1444, 1611, 1666, 2062]
     

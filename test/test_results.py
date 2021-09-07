@@ -28,7 +28,7 @@ def test_get_result_with_simple_query():
 
 def test_get_result_complex_filter():
     query = HLTVQuery(start_date="1st Sep 2020", end_date="1st Sep 2021",
-                      teams=[4608, 6651], require_all_teams=True)
+                      team_ids=[4608, 6651], require_all_teams=True)
     df = get_results(limit=3, query=query)
 
     # Expect exactly 3 results
