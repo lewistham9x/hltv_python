@@ -4,7 +4,8 @@ from setuptools import setup, find_packages
 install_requirements = [
     "lxml==4.6.3",
     "requests==2.26.0",
-    "pandas==1.3.2" 
+    "pandas==1.3.2",
+    "python-dateutil==2.8.2"
 ]
 
 test_requirements = [
