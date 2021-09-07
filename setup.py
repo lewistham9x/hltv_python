@@ -22,7 +22,7 @@ setup(
     author_email="vc.hoang01@gmail.com",
     license='MIT',
     package_dir= {"" : "src"},
-    packages=find_packages(where="src")
+    packages=find_packages(where="src"),
     python_requires=">=3.7",
     classifiers=[
         "Natural Language :: English",
