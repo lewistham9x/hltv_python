@@ -33,6 +33,6 @@ setup(
         "Programming Language :: Python 3.9",
     ],
     
-    install_require=install_requirements,
+    install_requires=install_requirements,
     test_require=test_requirements,
 )

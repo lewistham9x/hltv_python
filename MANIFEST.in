@@ -1,4 +1,4 @@
-graft hltv_api
+graft src 
 graft test
 global-exclude *.pyc
 global-exclude *.pyo
