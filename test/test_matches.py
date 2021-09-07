@@ -7,14 +7,13 @@ def test_matches_stats_limit_zero():
 
 def test_matches_stats_limit_one():
     df = get_matches_stats(limit=1)
-    assert len(df) == 1
+    assert len(set(df["match_id"])) == 1
 
 def test_matches_stats_simple_query():
     query = HLTVQuery(start_date="1st Sep 2021", end_date="2nd Sep 2021")
     df = get_matches_stats(limit=1, query=query)
     import pandas as pd
     pd.set_option('display.max_columns', None)
-    print(df.head(3))
 
     # 3 maps played in this game
     assert len(df) == 3

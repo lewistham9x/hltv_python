@@ -15,6 +15,6 @@ setup(
         "requests==2.26.0",
         "pandas==1.3.2" 
     ],
-    package_dir= {"" : "hltv_api"},
-    packages=find_packages(where="hltv_api")
+    package_dir= {"" : "src"},
+    packages=find_packages(where="src")
 )
