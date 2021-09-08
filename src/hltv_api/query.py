@@ -77,19 +77,8 @@ class HLTVQuery():
         self.match_type = match_type
 
         # Validate dates
-        if start_date is None:
-            self.start_date = None
-        elif type(start_date) == str:
-            self.start_date = parser.parse(start_date).strftime(HLTVConfig["date_format"])
-        else:
-            self.start_date = start_date.strftime(HLTVConfig["date_format"])
-
-        if end_date is None:
-            self.end_date = None
-        elif type(end_date) == str:
-            self.end_date = parser.parse(end_date).strftime(HLTVConfig["date_format"])
-        else:
-            self.end_date = end_date.strftime(HLTVConfig["date_format"])
+        self.start_date = self._parse_date(start_date)
+        self.end_date = self._parse_date(end_date)
 
         # Validate maps
         if all(elem in HLTVQuery.MAPS for elem in maps):
@@ -125,6 +114,16 @@ class HLTVQuery():
         # Hence making it 'None' removes it from the query parameter
         self.require_all_teams = require_all_teams or None
         self.require_all_players = require_all_players or None
+
+    def _parse_date(self, date):
+        if date is None:
+            return None
+
+        if type(date) == str:
+            return parser.parse(date).strftime(HLTVConfig["date_format"])
+
+        return date.strftime(HLTVConfig["date_format"])
+
 
     def _aggregate_events(self):
         client = HLTVClient()

@@ -118,7 +118,7 @@ def _parse_match_tree(html):
         "stars" : stars,
     }
 
-def get_results_matches_uris(skip=0, limit=100, query=None, **kwargs):
+def get_past_matches_ids(skip=0, limit=100, query=None, **kwargs):
     """Return the URIs of matches in /results page.
     
     First, hits HLTV page /results?offset={skip}&startDate={start_date}&endDate={end_date}.
@@ -150,12 +150,11 @@ def get_results_matches_uris(skip=0, limit=100, query=None, **kwargs):
     client = HLTVClient()
 
     # Accumulator for all match ids
-    all_matches_uris = []
+    all_matches_ids = []
 
     query = query or HLTVQuery(**kwargs)
 
-
-    while (limit is None) or (len(all_matches_uris) < limit):
+    while (limit is None) or (len(all_matches_ids) < limit):
         response = client.get(results_url, params=query.to_params())
         tree = html.fromstring(response.text)
 
@@ -169,11 +168,12 @@ def get_results_matches_uris(skip=0, limit=100, query=None, **kwargs):
         #   /matches/{id}/{event-name}
         matches = results[0].find_class("result-con")
         matches_uris = [match.xpath(".//a")[0].get("href") for match in matches]
+        matches_ids = [uri.split("/")[2] for uri in matches_uris]
 
         # Set the offset for the next request
         skip += len(matches_uris)
 
         # Adds to the accumulator
-        all_matches_uris += matches_uris
+        all_matches_ids += matches_ids
 
-    return all_matches_uris[:limit]
+    return all_matches_ids[:limit]
