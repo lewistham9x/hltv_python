@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from hltv_api.api.results import get_past_matches_ids, get_results
 from hltv_api.query import HLTVQuery
 
@@ -10,6 +12,19 @@ def test_get_result_empty_dataframe_when_limit_is_zero():
 def test_get_result_single_result_when_limit_is_one():
     df = get_results(limit=1)
     assert len(df) == 1
+
+
+def test_get_result_filter_no_result():
+    df = get_results(team_names=["Faze", "OG"], player_names=["s1mple"], require_all_teams=True)
+    assert len(df) == 0
+
+
+def test_get_result_no_limit():
+    df = get_results(team_names=["Faze", "OG"], player_names=["s1mple"],
+                     start_date=datetime(year=2021, month=6, day=1),
+                     end_date=datetime(year=2021, month=9, day=1),
+                     require_all_teams=True)
+    assert len(df) == 0
 
 
 def test_get_result_with_simple_query():

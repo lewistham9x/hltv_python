@@ -17,7 +17,7 @@ ROUND_STATS_COLUMNS = [[f"{i}_team_1_value", f"{i}_team_2_value", f"{i}_winner"]
                        for i in range(1, 31)]
 
 
-def get_matches_stats(skip=0, limit=None, batch_size=100, query=None, include_round_economy=False, **kwargs):
+def get_matches_stats(skip=0, limit=None, batch_size=100, query=None, **kwargs):
     """Hits the HLTV webpage and gets the details for the matches.
 
     Parameter

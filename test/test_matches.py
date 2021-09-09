@@ -13,7 +13,8 @@ def test_matches_stats_limit_one():
 
 
 def test_matches_no_limit_zero_result():
-    df = get_matches_stats(team_names=["FaZe"], player_names=["s1mple"])
+    df = get_matches_stats(team_names=["FaZe", "OG"], player_names=["s1mple"],
+                           require_all_teams=True)
     assert len(df) == 0
 
 

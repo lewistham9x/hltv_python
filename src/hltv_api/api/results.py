@@ -9,7 +9,7 @@ from hltv_api.pages.results import RESULTS_COLUMNS, parse_result_page
 from hltv_api.query import HLTVQuery
 
 
-def get_results(skip=0, limit=None, batch_size=100, query=None, **kwargs):
+def get_results(skip=0, limit=None, query=None, **kwargs):
     """Fetches data for the results filtered by `query`.
 
     Parameter
@@ -23,9 +23,6 @@ def get_results(skip=0, limit=None, batch_size=100, query=None, **kwargs):
         If not specified, only return 100 records. This is the default number
         of matches displayed per page on HLTV.
         If NONE, return all the records found.
-
-    batch_size: Optional[int]
-        How frequent to write results to dataframe.
 
     query: Optional[HLTVQuery]
         Query and filter for data required.
@@ -45,11 +42,17 @@ def get_results(skip=0, limit=None, batch_size=100, query=None, **kwargs):
 
     client = HLTVClient()
     while (limit is None) or (len(df) < limit):
-        response = client.get(url, params=query.to_params())
+        response = client.get(url, params={
+            "offset": skip, **query.to_params()
+        })
         tree = html.fromstring(response.text)
 
         results = parse_result_page(tree)
-        batch_limit = min(batch_size, limit - len(df)) if limit else batch_size
+        if len(results) == 0:
+            break
+
+        batch_limit = len(results) if limit is None else min(len(results), limit - len(df))
+
         df = df.append(results[:batch_limit])
 
         skip += len(df)
@@ -94,7 +97,10 @@ def get_past_matches_ids(skip=0, limit=100, query=None, **kwargs):
     query = query or HLTVQuery(**kwargs)
 
     while (limit is None) or (len(all_matches_ids) < limit):
-        response = client.get(results_url, params=query.to_params())
+        response = client.get(results_url, params={
+            "offset": skip, **query.to_params()
+        })
+
         tree = html.fromstring(response.text)
 
         results = parse_result_page(tree)
