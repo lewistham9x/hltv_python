@@ -7,7 +7,7 @@ HLTVConfig = {
     "players_uri": "players",
     "stats_uri": "stats",
 
-    "economy_uri": "stats/matches/mapstatsid",
+    "economy_uri": "stats/matches/economy/mapstatsid",
 
     "search_teams_uri": "searchTeam",
     "search_players_uri": "searchPlayer",
