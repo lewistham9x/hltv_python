@@ -75,7 +75,7 @@ def get_matches_stats(skip=0, limit=None, batch_size=100, query=None, **kwargs):
         for match_id in matches_ids:
             stat = get_match_stats_by_id(match_id)
             for map_details in stat["maps"]:
-                pivoted = {**map_details, **{k: v for k, v in stat.items()}}
+                pivoted = {**map_details, **stat}
                 matches_stats.append({k: v for k, v in pivoted.items() if k in columns})
 
         df = df.append(matches_stats)
