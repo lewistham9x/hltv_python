@@ -1,39 +1,43 @@
+import random
 import time
-from datetime import datetime
 from urllib.parse import urljoin
 
 import requests
+from requests import Request, Session
 
 from hltv_api.common import HLTVConfig
 from hltv_api.exceptions import HLTVRequestException
 
 
 class HLTVClient():
+    USER_AGENTS = ['hltv-api 0.1', 'python-request', 'request']
 
-    def __init__(self, max_retry=1):
-        self.last_request_timestamp = None
-        self.max_retry = 1
+    def __init__(self, max_retry=3):
+        self.prev_response = None
+
+        if max_retry > 0:
+            self.max_retry = max_retry
 
     def get(self, url, **kwargs):
         # TODO: Come up with algorithm to bypass rate limit
         attempt = 0
-        response = None
+
+        session = Session()
+        request = Request('GET', url=url, **kwargs)
 
         while attempt <= self.max_retry:
-            if self.last_request_timestamp is not None:
-                time_delta = datetime.now() - self.last_request_timestamp
-                delta_seconds = time_delta.total_seconds()
+            prepped = session.prepare_request(request)
+            response = session.send(prepped)
 
-                if delta_seconds < 1:
-                    time.sleep(1 - delta_seconds)
-
-            # Update timestamp and retry if required
-            response = requests.get(url, **kwargs)
-            self.last_request_timestamp = datetime.now()
+            if self.prev_response is not None:
+                self.__handle_failed_request(prepped, response, only_retry_after=attempt == self.max_retry)
 
             # Return response if request succeeds
             if response.ok:
                 return response
+
+            # Update timestamp and retry if required
+            self.prev_response = response
 
             # Otherwise retry
             attempt += 1
@@ -58,3 +62,15 @@ class HLTVClient():
         url = urljoin(HLTVConfig["base_url"], HLTVConfig["search_events_uri"])
         response = self.get(url, params={"term": search_term})
         return response.json()
+
+    def __handle_failed_request(self, request, response, only_retry_after=False):
+        if only_retry_after:
+            retry_after = response.headers.get("Retry-After", "10")
+            time.sleep(int(retry_after))
+
+        # TODO: Implement API throttling mechanism
+        request.headers.update({
+            'User-Agent', HLTVClient.USER_AGENTS[random.randint(0, len(HLTVClient.USER_AGENTS))]
+        })
+
+
