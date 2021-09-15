@@ -1,12 +1,17 @@
+import logging
+
 from dateutil import parser
 
 from hltv_api.common import HLTVConfig
+
+logger = logging.getLogger(__name__)
 
 RESULTS_COLUMNS = ["match_id", "date", "event", "team_1", "team_2", "map", "score_1", "score_2", "stars"]
 
 
 def parse_result_page(tree):
     """Parse and extract results from a `/results` page"""
+
     all_matches = []
 
     # Each result sublist contains all matches for that particular day
@@ -15,7 +20,6 @@ def parse_result_page(tree):
         return all_matches
 
     results_sublists = results[0].find_class("results-sublist")
-
 
     # Iterate over the sub-lists and then individual matches
     for sublist in results_sublists:

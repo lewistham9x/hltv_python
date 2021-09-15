@@ -60,6 +60,10 @@ def get_matches_with_economy(skip=0, limit=None, batch_size=100, query=None, **k
         matches_stats = []
         for match_id in matches_ids:
             stats = get_economy_by_match_id(match_id)
+
+            if len(stats) == 0:
+                continue
+
             for map_details in stats["maps"]:
                 pivoted = {**map_details, **stats}
                 matches_stats.append({k: v for k, v in pivoted.items() if k in columns})
@@ -83,10 +87,11 @@ def get_economy_by_match_id(match_id):
     match_page = html.fromstring(response.text)
     match_details = parse_match_page(match_page)
 
-    match_details["maps"] = [{
-        **map_played,
-        **get_economy_by_map_stats_id(map_played["map_stats_id"])
-    } for map_played in match_details["maps"]]
+    if match_details != {}:
+        match_details["maps"] = [{
+            **map_played,
+            **get_economy_by_map_stats_id(map_played["map_stats_id"])
+        } for map_played in match_details["maps"]]
 
     return match_details
 

@@ -1,13 +1,14 @@
+import logging
 import os
 from urllib.parse import urljoin
 
 import pandas as pd
 from lxml import html
 
+from hltv_api.api.results import get_past_matches_ids
 from hltv_api.client import HLTVClient
 from hltv_api.common import HLTVConfig
 from hltv_api.pages.matches import parse_match_page
-from hltv_api.api.results import get_past_matches_ids
 from hltv_api.query import HLTVQuery
 
 MATCHES_COLUMNS = ["match_id", "date", "team_1", "team_2", "team_1_id", "team_2_id",
@@ -15,6 +16,8 @@ MATCHES_COLUMNS = ["match_id", "date", "team_1", "team_2", "team_1_id", "team_2_
 
 ROUND_STATS_COLUMNS = [[f"{i}_team_1_value", f"{i}_team_2_value", f"{i}_winner"]
                        for i in range(1, 31)]
+
+logger = logging.getLogger(__name__)
 
 
 def get_matches_stats(skip=0, limit=None, batch_size=100, query=None, **kwargs):
@@ -69,14 +72,19 @@ def get_matches_stats(skip=0, limit=None, batch_size=100, query=None, **kwargs):
         # Breaks if no result found
         if len(matches_ids) == 0:
             break
-
         # Fetches match statistics using its ID
         matches_stats = []
         for match_id in matches_ids:
-            stat = get_match_stats_by_id(match_id)
-            for map_details in stat["maps"]:
-                pivoted = {**map_details, **stat}
-                matches_stats.append({k: v for k, v in pivoted.items() if k in columns})
+            try:
+                stat = get_match_stats_by_id(match_id)
+                for map_details in stat["maps"]:
+                    pivoted = {**map_details, **stat}
+                    matches_stats.append({k: v for k, v in pivoted.items() if k in columns})
+            except Exception as e:
+                logger.error(f"Error parsing result for {match_id}. Either match_id is invalid or"
+                             "HLTV service unavailable at the moment.")
+                logger.error(e)
+                continue
 
         df = df.append(matches_stats)
         skip += len(matches_ids)
@@ -110,4 +118,10 @@ def get_match_stats_by_id(match_id):
     # HTMLElement
     tree = html.fromstring(response.text)
 
-    return parse_match_page(tree)
+    try:
+        return parse_match_page(tree)
+    except Exception as e:
+        logger.error(f"Error parsing result for {match_id}. Either match_id is invalid or"
+                     "HLTV service unavailable at the moment.")
+        logger.error(e)
+        return {}

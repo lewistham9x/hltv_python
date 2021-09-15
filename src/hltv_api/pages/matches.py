@@ -1,6 +1,10 @@
+import logging
+
 from dateutil import parser
 
 from hltv_api.common import HLTVConfig
+
+logger = logging.getLogger(__name__)
 
 
 def parse_match_page(tree):
@@ -44,7 +48,7 @@ def parse_match_page(tree):
     # Maps played
     map_picks = tree.find_class("mapholder")
     maps = [parse_mapholder_div(map_pick)
-            for map_pick in map_picks if len(map_pick.find_class("played")) > 0]
+            for map_pick in map_picks if len(map_pick.find_class("results-stats")) > 0]
 
     return {
         "date": date,
@@ -112,4 +116,3 @@ def parse_mapholder_div(tree):
         "team_2_ct": int(team_2_ct),
         "starting_ct": starting_ct
     }
-

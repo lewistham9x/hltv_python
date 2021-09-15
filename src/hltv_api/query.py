@@ -124,7 +124,6 @@ class HLTVQuery():
 
         return date.strftime(HLTVConfig["date_format"])
 
-
     def _aggregate_events(self):
         client = HLTVClient()
         event_ids_from_names = [matching_event["id"]

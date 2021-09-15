@@ -21,17 +21,16 @@ class HLTVClient():
     def get(self, url, **kwargs):
         # TODO: Come up with algorithm to bypass rate limit
         attempt = 0
-
         session = Session()
         request = Request('GET', url=url, **kwargs)
+        response = None
 
         while attempt <= self.max_retry:
             prepped = session.prepare_request(request)
-            response = session.send(prepped)
-
             if self.prev_response is not None:
-                self.__handle_failed_request(prepped, response, only_retry_after=attempt == self.max_retry)
+                self.__handle_failed_request(prepped, only_retry_after=attempt == self.max_retry)
 
+            response = session.send(prepped)
             # Return response if request succeeds
             if response.ok:
                 return response
@@ -43,9 +42,9 @@ class HLTVClient():
             attempt += 1
 
         raise HLTVRequestException(
-            message=f"Failed to get data from HLTV after {attempt} attempt(s)",
-            status_code=response.status_code,
-            response=response
+            f"Failed to get data from HLTV after {attempt} attempt(s)",
+            response.status_code,
+            response
         )
 
     def search_team(self, search_term):
@@ -63,14 +62,13 @@ class HLTVClient():
         response = self.get(url, params={"term": search_term})
         return response.json()
 
-    def __handle_failed_request(self, request, response, only_retry_after=False):
+    def __handle_failed_request(self, request, only_retry_after=False):
         if only_retry_after:
-            retry_after = response.headers.get("Retry-After", "10")
+            retry_after = self.prev_response.headers.get("Retry-After", "10")
             time.sleep(int(retry_after))
 
         # TODO: Implement API throttling mechanism
+
         request.headers.update({
-            'User-Agent', HLTVClient.USER_AGENTS[random.randint(0, len(HLTVClient.USER_AGENTS))]
+            'User-Agent': "python-requests"
         })
-
-

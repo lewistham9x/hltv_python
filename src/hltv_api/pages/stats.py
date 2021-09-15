@@ -1,5 +1,10 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def parse_map_stat_economy_page(tree):
+    """Parses /stats/matches/mapstatsid/{id}/{name}. """
     history = [half.find_class("equipment-category-td")
                for half in tree.find_class("team-categories")]
 
@@ -11,7 +16,7 @@ def parse_map_stat_economy_page(tree):
         team_1_value = team_2_value = winner = None
         if i < len(team_1_rounds):
             team_1_equipment = team_1_rounds[i].get("title")
-            team_1_value = int(team_1_equipment.strip("Equipment value: "))\
+            team_1_value = int(team_1_equipment.strip("Equipment value: "))
 
             team_2_equipment = team_2_rounds[i].get("title").strip("Equipment value: ")
             team_2_value = int(team_2_equipment.strip("Equipment value: "))
