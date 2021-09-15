@@ -34,5 +34,4 @@ setup(
     ],
     
     install_requires=install_requirements,
-    test_require=test_requirements,
 )
