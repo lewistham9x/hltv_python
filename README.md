@@ -16,8 +16,9 @@ pip install hltv-api
 
 ### Example Usage
 Some useful methods:
-1. results.
-
+1. [`results.get_results`](src/hltv_api/api/results.py) - get historical matches along with the overall result
+2. [`stats.get_matches_with_economy`](src/hltv_api/api/stats.py) - get historical matches with a breakdown equipment value 
+for each round
 You can find more examples in [`examples/`]().
 
 #### Simple usage

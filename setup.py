@@ -27,10 +27,12 @@ setup(
     python_requires=">=3.7",
     classifiers=[
         "Natural Language :: English",
+        "Development Status :: 2 - Pre-Alpha",
+        "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python 3.7",
-        "Programming Language :: Python 3.8",
-        "Programming Language :: Python 3.9",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     
     install_requires=install_requirements,
