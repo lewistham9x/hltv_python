@@ -2,49 +2,65 @@ import random
 import time
 from urllib.parse import urljoin
 
-import requests
-from requests import Request, Session
+import cloudscraper
 
 from hltv_api.common import HLTVConfig
 from hltv_api.exceptions import HLTVRequestException
 
 
-class HLTVClient():
-    USER_AGENTS = ['hltv-api 0.1', 'python-request', 'request']
-
-    def __init__(self, max_retry=3):
+class HLTVClient:
+    def __init__(self, max_retry=3, proxies=None):
         self.prev_response = None
+        self.max_retry = max_retry if max_retry > 0 else 3
+        self.proxies = proxies
+        self.current_proxy = None
+        self.scraper = self._create_scraper()
 
-        if max_retry > 0:
-            self.max_retry = max_retry
+    def _create_scraper(self):
+        if self.proxies:
+            self.current_proxy = self._get_random_proxy()
+            return cloudscraper.create_scraper(proxies=self.current_proxy)
+        return cloudscraper.create_scraper()
+
+    def _get_random_proxy(self):
+        if isinstance(self.proxies, list):
+            return random.choice(self.proxies)
+        elif isinstance(self.proxies, dict):
+            return self.proxies
+        else:
+            raise ValueError("Proxies must be a list of proxy strings or a dictionary.")
+
+    def _rotate_proxy(self):
+        if isinstance(self.proxies, list):
+            self.current_proxy = self._get_random_proxy()
+            self.scraper = self._create_scraper()
 
     def get(self, url, **kwargs):
-        # TODO: Come up with algorithm to bypass rate limit
         attempt = 0
-        session = Session()
-        request = Request('GET', url=url, **kwargs)
         response = None
 
         while attempt <= self.max_retry:
-            prepped = session.prepare_request(request)
-            if self.prev_response is not None:
-                self.__handle_failed_request(prepped, only_retry_after=attempt == self.max_retry)
+            try:
+                response = self.scraper.get(url, **kwargs)
+                if response.ok:
+                    return response
+            except cloudscraper.exceptions.CloudflareChallengeError as e:
+                print(f"Cloudflare challenge encountered: {e}")
+            except Exception as e:
+                print(f"An error occurred: {e}")
 
-            response = session.send(prepped)
-            # Return response if request succeeds
-            if response.ok:
-                return response
-
-            # Update timestamp and retry if required
             self.prev_response = response
-
-            # Otherwise retry
             attempt += 1
+
+            if self.proxies:
+                self._rotate_proxy()
+
+            time.sleep(random.uniform(1, 3))
 
         raise HLTVRequestException(
             f"Failed to get data from HLTV after {attempt} attempt(s)",
-            response.status_code,
-            response
+            response.status_code if response else None,
+            response,
         )
 
     def search_team(self, search_term):
@@ -61,14 +77,3 @@ class HLTVClient():
         url = urljoin(HLTVConfig["base_url"], HLTVConfig["search_events_uri"])
         response = self.get(url, params={"term": search_term})
         return response.json()
-
-    def __handle_failed_request(self, request, only_retry_after=False):
-        if only_retry_after:
-            retry_after = self.prev_response.headers.get("Retry-After", "10")
-            time.sleep(int(retry_after))
-
-        # TODO: Implement API throttling mechanism
-
-        request.headers.update({
-            'User-Agent': "python-requests"
-        })
