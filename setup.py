@@ -5,12 +5,11 @@ install_requirements = [
     "lxml==4.6.3",
     "requests==2.26.0",
     "pandas==1.3.2",
-    "python-dateutil==2.8.2"
+    "python-dateutil==2.8.2",
+    "botasaurus==4.0.47",
 ]
 
-test_requirements = [
-    "pytest>=6"
-]
+test_requirements = ["pytest>=6"]
 
 setup(
     name="hltv-api",
@@ -21,8 +20,8 @@ setup(
     long_description_content_type="text/markdown",
     author="Hoang Vu",
     author_email="vc.hoang01@gmail.com",
-    license='MIT',
-    package_dir= {"" : "src"},
+    license="MIT",
+    package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.7",
     classifiers=[
@@ -34,6 +33,5 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    
     install_requires=install_requirements,
 )
