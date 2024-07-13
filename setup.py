@@ -6,7 +6,6 @@ install_requirements = [
     "requests==2.26.0",
     "pandas==1.3.2",
     "python-dateutil==2.8.2",
-    "botasaurus==4.0.47",
 ]
 
 test_requirements = ["pytest>=6"]
