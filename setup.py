@@ -5,24 +5,22 @@ install_requirements = [
     "lxml==4.6.3",
     "requests==2.26.0",
     "pandas==1.3.2",
-    "python-dateutil==2.8.2"
+    "python-dateutil==2.8.2",
 ]
 
-test_requirements = [
-    "pytest>=6"
-]
+test_requirements = ["pytest>=6"]
 
 setup(
     name="hltv-api",
     version="0.0.1",
     description="Unofficial HLTV API to query Counter Strike historical data",
-    url="https://github.com/hoangvu01/hltv_python",
+    url="https://github.com/lewistham9x/hltv_python",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Hoang Vu",
     author_email="vc.hoang01@gmail.com",
-    license='MIT',
-    package_dir= {"" : "src"},
+    license="MIT",
+    package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.7",
     classifiers=[
@@ -34,6 +32,5 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
-    
     install_requires=install_requirements,
 )
