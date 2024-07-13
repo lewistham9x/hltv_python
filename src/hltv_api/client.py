@@ -6,23 +6,19 @@ from botasaurus import Browser
 
 from hltv_api.common import HLTVConfig
 from hltv_api.exceptions import HLTVRequestException
+from urllib.parse import urljoin
+
+from botasaurus.request import request, Request
 
 
 class HLTVClient:
     def __init__(self, max_retry=3):
-        self.browser = Browser(
-            max_retry=max_retry,
-            request_interval=1,  # 1 second interval between requests
-            retry_wait_time=10,  # Wait 10 seconds before retrying
-        )
+        self.max_retry = max_retry
 
-    @bt.browser.get()
-    def _make_request(self, url, params=None):
-        response = self.browser.get(url, params=params)
-        if not response.ok:
-            raise HLTVRequestException(
-                f"Failed to get data from HLTV", response.status_code, response
-            )
+    @request(max_retry=3)
+    def _make_request(self, request: Request, url, params=None):
+        response = request.get(url, params=params)
+        response.raise_for_status()
         return response.json()
 
     def search_team(self, search_term):
